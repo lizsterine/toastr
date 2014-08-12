@@ -8,6 +8,9 @@
  * Author: John Papa and Hans Fjällemark
  * ARIA Support: Greta Krafsig
  * Project: https://github.com/CodeSeven/toastr
+ *
+ * Forked: Lizsterine
+ * Notes: Added additional functionality to update an existing message
  */
 ; (function (define) {
     define(['jquery'], function ($) {
@@ -32,7 +35,8 @@
                 subscribe: subscribe,
                 success: success,
                 version: '2.0.3',
-                warning: warning
+                warning: warning,
+                update: update
             };
 
             return toastr;
@@ -113,6 +117,34 @@
                     $container.remove();
                 }
             }
+
+            function update($toastElement, optionsToUpdate) {
+                var intervalId = null,
+                    $titleElement = $toastElement.find('.' + getOptions().titleClass),
+                    $messageElement = $toastElement.find('.' + getOptions().messageClass);
+
+                if(optionsToUpdate.title) {
+                    $titleElement.innerHTML(optionsToUpdate.title);
+                }
+
+                if(optionsToUpdate.message) {
+                    $messageElement.html(optionsToUpdate.message);
+                }
+
+                if(optionsToUpdate.type) {
+                    $toastElement.removeClass($toastElement.data("iconClass")).addClass(getOptions().iconClasses[optionsToUpdate.type]);
+                }
+
+                if(optionsToUpdate.timeOut || optionsToUpdate.timeOut === 0) {
+                    if($toastElement.data("intervalId")) {
+                        clearTimeout($toastElement.data("intervalId"));
+                    }
+
+                    intervalId = setTimeout(function(){clear($toastElement);}, optionsToUpdate.timeOut);
+                    $toastElement.data("intervalId", intervalId);
+                }
+            }
+
             //#endregion
 
             //#region Internal Methods
@@ -213,6 +245,7 @@
 
                 if (map.iconClass) {
                     $toastElement.addClass(options.toastClass).addClass(iconClass);
+                    $toastElement.data("iconClass", iconClass);
                 }
 
                 if (map.title) {
@@ -241,9 +274,10 @@
                 $toastElement[options.showMethod](
                     { duration: options.showDuration, easing: options.showEasing, complete: options.onShown }
                 );
-
+                
                 if (options.timeOut > 0) {
                     intervalId = setTimeout(hideToast, options.timeOut);
+                    $toastElement.data("intervalId", intervalId);
                 }
 
                 $toastElement.hover(stickAround, delayedHideToast);
